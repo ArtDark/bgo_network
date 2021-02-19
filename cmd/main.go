@@ -4,19 +4,55 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/ArtDark/bgo_network/pkg/card"
 	"io"
 	"io/ioutil"
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
+var user *card.Card
+
 func main() {
+	var errUser error
+	user, errUser = genUser()
+	if errUser != nil {
+		log.Println("Can't create user")
+		os.Exit(1)
+	}
 	if err := execute(); err != nil {
 		os.Exit(1)
 	}
+}
+
+func genUser() (user *card.Card, err error) {
+	ivanPetrov := &card.Card{
+		Id: 1,
+		Owner: card.Owner{
+			FirstName: "Ivan",
+			LastName:  "Petrov",
+		},
+		Issuer:   "Master Card",
+		Balance:  48234_63,
+		Currency: "RUB",
+		Number:   "5106212365738734",
+		Icon:     "https://www.mastercard.ru/content/dam/public/enterprise/resources/images/icons/favicon.ico",
+		Transactions: card.Transactions{
+			XMLName:      "Transactions",
+			Transactions: []card.Transaction{},
+		},
+	}
+
+	err = ivanPetrov.MakeTransactions(10)
+	if err != nil {
+		return nil, err
+	}
+
+	return ivanPetrov, nil
 }
 
 func execute() (err error) {
@@ -86,8 +122,8 @@ func handle(conn net.Conn) {
 }
 
 func writeIndex(writer io.Writer) error {
-	username := "Пётр"
-	balance := "1 000.50" // FIXME: написать функцию-форматтер
+	username := user.FirstName
+	balance := strconv.Itoa(user.Balance)
 
 	page, err := ioutil.ReadFile("web/template/index.html")
 	log.Println(page)

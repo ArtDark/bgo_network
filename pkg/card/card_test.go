@@ -189,12 +189,15 @@ func BenchmarkSumCategoryTransactions(b *testing.B) {
 			FirstName: "User",
 			LastName:  "User",
 		},
-		Issuer:       "Visa",
-		Balance:      5000_00,
-		Currency:     "RUR",
-		Number:       "4619071400941155",
-		Icon:         "https://cdn.visa.com/cdn/assets/images/logos/visa/logo.png",
-		Transactions: []Transaction{},
+		Issuer:   "Visa",
+		Balance:  5000_00,
+		Currency: "RUR",
+		Number:   "4619071400941155",
+		Icon:     "https://cdn.visa.com/cdn/assets/images/logos/visa/logo.png",
+		Transactions: Transactions{
+			XMLName:      "",
+			Transactions: nil,
+		},
 	}
 
 	err := user.MakeTransactions(1_000_000)
