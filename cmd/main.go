@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/ArtDark/bgo_network/pkg/card"
 	"io"
@@ -10,49 +12,15 @@ import (
 	"log"
 	"net"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
 
-var user *card.Card
-
 func main() {
-	var errUser error
-	user, errUser = genUser()
-	if errUser != nil {
-		log.Println("Can't create user")
-		os.Exit(1)
-	}
+
 	if err := execute(); err != nil {
 		os.Exit(1)
 	}
-}
-
-func genUser() (user *card.Card, err error) {
-	ivanPetrov := &card.Card{
-		Id: 1,
-		Owner: card.Owner{
-			FirstName: "Ivan",
-			LastName:  "Petrov",
-		},
-		Issuer:   "Master Card",
-		Balance:  48234_63,
-		Currency: "RUB",
-		Number:   "5106212365738734",
-		Icon:     "https://www.mastercard.ru/content/dam/public/enterprise/resources/images/icons/favicon.ico",
-		Transactions: card.Transactions{
-			XMLName:      "Transactions",
-			Transactions: []card.Transaction{},
-		},
-	}
-
-	err = ivanPetrov.MakeTransactions(10)
-	if err != nil {
-		return nil, err
-	}
-
-	return ivanPetrov, nil
 }
 
 func execute() (err error) {
@@ -111,7 +79,11 @@ func handle(conn net.Conn) {
 	case "/":
 		err = writeIndex(conn)
 	case "/operations.csv":
-		err = writeOperations(conn)
+		err = writeOperationsToCsv(conn)
+	case "/operations.json":
+		err = writeOperationsToJson(conn)
+	case "/operations.xml":
+		err = writeOperationsToXml(conn)
 	default:
 		err = write404(conn)
 	}
@@ -122,11 +94,11 @@ func handle(conn net.Conn) {
 }
 
 func writeIndex(writer io.Writer) error {
-	username := user.FirstName
-	balance := strconv.Itoa(user.Balance)
+	username := "Ivan"
+	balance := "103242"
 
 	page, err := ioutil.ReadFile("web/template/index.html")
-	log.Println(page)
+
 	if err != nil {
 		return err
 	}
@@ -140,12 +112,52 @@ func writeIndex(writer io.Writer) error {
 	}, page)
 }
 
-func writeOperations(writer io.Writer) error {
+func writeOperationsToCsv(writer io.Writer) error {
 	// TODO: Generate CSV
 	page := []byte("xxxx,0001,0002,1592373247\n")
 
 	return writeResponse(writer, 200, []string{
 		"Content-Type: text/csv",
+		fmt.Sprintf("Content-Length: %d", len(page)),
+		"Connection: close",
+	}, page)
+}
+
+func writeOperationsToJson(writer io.Writer) error {
+	t := card.Transaction{
+		XMLName: "food",
+		Id:      "1",
+		Bill:    340,
+		Time:    1621975879,
+		MCC:     "5277",
+		Status:  "Ok",
+	}
+	page, err := json.MarshalIndent(t, "", " ")
+	if err != nil {
+		return err
+	}
+	return writeResponse(writer, 200, []string{
+		"Content-Type: application/json",
+		fmt.Sprintf("Content-Length: %d", len(page)),
+		"Connection: close",
+	}, page)
+}
+
+func writeOperationsToXml(writer io.Writer) error {
+	t := card.Transaction{
+		XMLName: "food",
+		Id:      "1",
+		Bill:    340,
+		Time:    1621975879,
+		MCC:     "5277",
+		Status:  "Ok",
+	}
+	page, err := xml.MarshalIndent(t, "", " ")
+	if err != nil {
+		return err
+	}
+	return writeResponse(writer, 200, []string{
+		"Content-Type: application/xml",
 		fmt.Sprintf("Content-Length: %d", len(page)),
 		"Connection: close",
 	}, page)
