@@ -43,7 +43,7 @@ func execute() (err error) {
 			log.Println(err)
 			continue
 		}
-		handle(conn)
+		go handle(conn)
 	}
 }
 
@@ -97,7 +97,7 @@ func writeIndex(writer io.Writer) error {
 	username := "Ivan"
 	balance := "103242"
 
-	page, err := ioutil.ReadFile("web/template/index.html")
+	page, err := ioutil.ReadFile("webserver/template/index.html")
 
 	if err != nil {
 		return err
@@ -164,7 +164,7 @@ func writeOperationsToXml(writer io.Writer) error {
 }
 
 func write404(writer io.Writer) error {
-	page, err := ioutil.ReadFile("web/template/404.html")
+	page, err := ioutil.ReadFile("webserver/template/404.html")
 	if err != nil {
 		return err
 	}
